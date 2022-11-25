@@ -11,7 +11,58 @@ MISSING
 MISSING
 
 ### Prerequisites
-MISSING
+
+#### Create OCI Dynamic Group
+
+To interact with OCI resources: queues & functions, the application will authenticate as instance principal.
+
+**Create tag namespace**: authorization
+**Create a tag key**: instance_principal
+
+**Name**: queue_automation_dg
+**match_rule**:
+`All {instance.compartment.id='<kubernetes worker nodes compartment_ocid>',`
+`tag.authorization.instance_principal.value='yes'}`
+
+Add to Kubernetes worker nodes below the defined tag:
+authorization.instance_principal = 'yes'
+
+#### Create OCI policies
+
+ **Name** : queue_automation_policies  
+
+**Policies** : 
+
+`allow dynamic-group queue_automation_dg to use queues in compartment <queue_parent_compartment><br/>allow dynamic-group queue_automation_dg to use fn-invocation in compartment <function_parent_compartment>` 
+
+For explicit access is possible to target queue.id and function.id
+
+**Policies** : 
+
+`allow dynamic-group queue_automation_dg to use queues in compartment <queue_parent_compartment> where target.queue.id='<queue_OCID>'<br/>allow dynamic-group queue_automation_dg to use fn-invocation in compartment <function_parent_compartment> where target.function.id = '<function_OCID>'` 
+
+
+
+#### Build docker image
+
+`docker build -f Dockerfile -t <OCIR_container_image_url>` 
+
+#### Push docker image to OCIR
+
+https://docs.oracle.com/en-us/iaas/Content/Registry/Tasks/registrypushingimagesusingthedockercli.htm
+
+docker push <OCIR_container_image_url>
+
+#### OCIR Docker Secret
+
+Create a docker secret for OCIR and update secret name in queue-automation.yaml file.
+
+https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengpullingimagesfromocir.htm
+
+#### Replace secret name and container image URL in queue-automation.yaml
+
+Create deployment
+`kubectl apply -f queue-automation.yaml`
 
 ## Notes/Issues
 MISSING
